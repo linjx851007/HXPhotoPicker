@@ -616,12 +616,7 @@
     }];
     return operation;
 #elif HasSDWebImage
-    SDWebImageCombinedOperation *operation = [[SDWebImageManager sharedManager] loadImageWithURL:url options:0 progress:nil completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
-        if (completion) {
-            completion(image, url, error);
-        }
-    }];
-    return operation;
+
 #endif
     return nil;
 }
@@ -800,21 +795,6 @@
         }];
         return 0;
 #elif HasSDWebImage
-        [[SDWebImageManager sharedManager] loadImageWithURL:self.networkPhotoUrl options:0 progress:nil completed:^(UIImage * _Nullable image, NSData * _Nullable data, NSError * _Nullable error, SDImageCacheType cacheType, BOOL finished, NSURL * _Nullable imageURL) {
-            if (data) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (success) {
-                        success(data, 0, weakSelf, nil);
-                    }
-                });
-            }else {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if (failed) {
-                        failed(nil, weakSelf);
-                    }
-                });
-            }
-        }];
         return 0;
 #endif
     }

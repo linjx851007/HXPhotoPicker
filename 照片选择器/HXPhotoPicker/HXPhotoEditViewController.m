@@ -361,14 +361,52 @@
     
     CGPoint origin = CGPointMake(-rct.origin.x, -rct.origin.y);
     UIImage *img = nil;
-    
-    UIGraphicsBeginImageContextWithOptions(rct.size, NO, self.imageView.image.scale);
-    [self.imageView.image drawAtPoint:origin];
-    img = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return img;
+        
+        img = [self cropImage:self.imageView.image toRect:rct];
+    //    UIGraphicsBeginImageContextWithOptions(rct.size, YES, self.imageView.image.scale);
+    //    [self.imageView.image drawAtPoint:origin];
+    //    img = UIGraphicsGetImageFromCurrentImageContext();
+    //    UIGraphicsEndImageContext();
+        
+        return img;
 }
+
+- (UIImage *)cropImage:(UIImage*)image toRect:(CGRect)rect {
+    CGFloat (^rad)(CGFloat) = ^CGFloat(CGFloat deg) {
+        return deg / 180.0f * (CGFloat) M_PI;
+    };
+
+    // determine the orientation of the image and apply a transformation to the crop rectangle to shift it to the correct position
+    CGAffineTransform rectTransform;
+    switch (image.imageOrientation) {
+        case UIImageOrientationLeft:
+            rectTransform = CGAffineTransformTranslate(CGAffineTransformMakeRotation(rad(90)), 0, -image.size.height);
+            break;
+        case UIImageOrientationRight:
+            rectTransform = CGAffineTransformTranslate(CGAffineTransformMakeRotation(rad(-90)), -image.size.width, 0);
+            break;
+        case UIImageOrientationDown:
+            rectTransform = CGAffineTransformTranslate(CGAffineTransformMakeRotation(rad(-180)), -image.size.width, -image.size.height);
+            break;
+        default:
+            rectTransform = CGAffineTransformIdentity;
+    };
+
+    // adjust the transformation scale based on the image scale
+    rectTransform = CGAffineTransformScale(rectTransform, image.scale, image.scale);
+
+    // apply the transformation to the rect to create a new, shifted rect
+    CGRect transformedCropSquare = CGRectApplyAffineTransform(rect, rectTransform);
+    // use the rect to crop the image
+    CGImageRef imageRef = CGImageCreateWithImageInRect(image.CGImage, transformedCropSquare);
+    // create a new UIImage and set the scale and orientation appropriately
+    UIImage *result = [UIImage imageWithCGImage:imageRef scale:image.scale orientation:image.imageOrientation];
+    // memory cleanup
+    CGImageRelease(imageRef);
+
+    return result;
+}
+
 - (void)panGridView:(UIPanGestureRecognizer*)sender {
     static BOOL dragging = NO;
     static CGRect initialRect;
